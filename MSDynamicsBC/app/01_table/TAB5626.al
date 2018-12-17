@@ -1,0 +1,33 @@
+table 5626 Maintenance
+{
+    // version NAVW17.00
+
+    Caption = 'Maintenance';
+    DrillDownPageID = Maintenance;
+    LookupPageID = Maintenance;
+
+    fields
+    {
+        field(1;"Code";Code[10])
+        {
+            Caption = 'Code';
+            NotBlank = true;
+        }
+        field(2;Description;Text[50])
+        {
+            Caption = 'Description';
+        }
+    }
+
+    keys
+    {
+        key(Key1;"Code")
+        {
+        }
+    }
+
+    fieldgroups
+    {
+    }
+}
+

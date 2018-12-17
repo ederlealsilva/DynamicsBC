@@ -1,0 +1,253 @@
+codeunit 312 "Cust-Check Cr. Limit"
+{
+    // version NAVW113.00
+
+    Permissions = TableData "My Notifications"=rimd;
+
+    trigger OnRun()
+    begin
+    end;
+
+    var
+        InstructionMgt: Codeunit "Instruction Mgt.";
+        NotificationLifecycleMgt: Codeunit "Notification Lifecycle Mgt.";
+        CustCheckCreditLimit: Page "Check Credit Limit";
+        InstructionTypeTxt: Label 'Check Cr. Limit';
+        GetDetailsTxt: Label 'Show details';
+        CreditLimitNotificationMsg: Label 'The customer''s credit limit has been exceeded.';
+        CreditLimitNotificationDescriptionTxt: Label 'Show warning when a sales document will exceed the customer''s credit limit.';
+        OverdueBalanceNotificationMsg: Label 'This customer has an overdue balance.';
+        OverdueBalanceNotificationDescriptionTxt: Label 'Show warning when a sales document is for a customer with an overdue balance.';
+
+    [Scope('Personalization')]
+    procedure GenJnlLineCheck(GenJnlLine: Record "Gen. Journal Line")
+    var
+        SalesHeader: Record "Sales Header";
+        AdditionalContextId: Guid;
+    begin
+        if not GuiAllowed then
+          exit;
+
+        if not SalesHeader.Get(GenJnlLine."Document Type",GenJnlLine."Document No.") then
+          SalesHeader.Init;
+        OnNewCheckRemoveCustomerNotifications(SalesHeader.RecordId,true);
+
+        if CustCheckCreditLimit.GenJnlLineShowWarningAndGetCause(GenJnlLine,AdditionalContextId) then
+          CreateAndSendNotification(SalesHeader.RecordId,AdditionalContextId,'');
+    end;
+
+    [Scope('Personalization')]
+    procedure SalesHeaderCheck(var SalesHeader: Record "Sales Header") CreditLimitExceeded: Boolean
+    var
+        AdditionalContextId: Guid;
+    begin
+        if not GuiAllowed then
+          exit;
+
+        OnNewCheckRemoveCustomerNotifications(SalesHeader.RecordId,true);
+
+        if not CustCheckCreditLimit.SalesHeaderShowWarningAndGetCause(SalesHeader,AdditionalContextId) then
+          SalesHeader.OnCustomerCreditLimitNotExceeded
+        else
+          if InstructionMgt.IsEnabled(GetInstructionType(Format(SalesHeader."Document Type"),SalesHeader."No.")) then begin
+            CreditLimitExceeded := true;
+
+            CreateAndSendNotification(SalesHeader.RecordId,AdditionalContextId,'');
+            SalesHeader.OnCustomerCreditLimitExceeded;
+          end;
+    end;
+
+    [Scope('Personalization')]
+    procedure SalesLineCheck(SalesLine: Record "Sales Line")
+    var
+        SalesHeader: Record "Sales Header";
+        AdditionalContextId: Guid;
+    begin
+        if not GuiAllowed then
+          exit;
+
+        if not SalesHeader.Get(SalesLine."Document Type",SalesLine."Document No.") then
+          SalesHeader.Init;
+        OnNewCheckRemoveCustomerNotifications(SalesHeader.RecordId,false);
+
+        if not CustCheckCreditLimit.SalesLineShowWarningAndGetCause(SalesLine,AdditionalContextId) then
+          SalesHeader.OnCustomerCreditLimitNotExceeded
+        else
+          if InstructionMgt.IsEnabled(GetInstructionType(Format(SalesLine."Document Type"),SalesLine."Document No.")) then begin
+            CreateAndSendNotification(SalesHeader.RecordId,AdditionalContextId,'');
+            SalesHeader.OnCustomerCreditLimitExceeded;
+          end;
+    end;
+
+    [Scope('Personalization')]
+    procedure ServiceHeaderCheck(ServiceHeader: Record "Service Header")
+    var
+        AdditionalContextId: Guid;
+    begin
+        if not GuiAllowed then
+          exit;
+
+        OnNewCheckRemoveCustomerNotifications(ServiceHeader.RecordId,true);
+
+        if CustCheckCreditLimit.ServiceHeaderShowWarningAndGetCause(ServiceHeader,AdditionalContextId) then
+          CreateAndSendNotification(ServiceHeader.RecordId,AdditionalContextId,'');
+    end;
+
+    [Scope('Personalization')]
+    procedure ServiceLineCheck(ServiceLine: Record "Service Line")
+    var
+        ServiceHeader: Record "Service Header";
+        AdditionalContextId: Guid;
+    begin
+        if not GuiAllowed then
+          exit;
+
+        if not ServiceHeader.Get(ServiceLine."Document Type",ServiceLine."Document No.") then
+          ServiceHeader.Init;
+        OnNewCheckRemoveCustomerNotifications(ServiceHeader.RecordId,false);
+
+        if CustCheckCreditLimit.ServiceLineShowWarningAndGetCause(ServiceLine,AdditionalContextId) then
+          CreateAndSendNotification(ServiceHeader.RecordId,AdditionalContextId,'');
+    end;
+
+    [Scope('Personalization')]
+    procedure ServiceContractHeaderCheck(ServiceContractHeader: Record "Service Contract Header")
+    var
+        AdditionalContextId: Guid;
+    begin
+        if not GuiAllowed then
+          exit;
+
+        OnNewCheckRemoveCustomerNotifications(ServiceContractHeader.RecordId,true);
+
+        if CustCheckCreditLimit.ServiceContractHeaderShowWarningAndGetCause(ServiceContractHeader,AdditionalContextId) then
+          CreateAndSendNotification(ServiceContractHeader.RecordId,AdditionalContextId,'');
+    end;
+
+    [Scope('Personalization')]
+    procedure GetInstructionType(DocumentType: Code[30];DocumentNumber: Code[20]): Code[50]
+    begin
+        exit(CopyStr(StrSubstNo('%1 %2 %3',DocumentType,DocumentNumber,InstructionTypeTxt),1,50));
+    end;
+
+    [Scope('Personalization')]
+    procedure BlanketSalesOrderToOrderCheck(SalesOrderHeader: Record "Sales Header")
+    var
+        AdditionalContextId: Guid;
+    begin
+        if not GuiAllowed then
+          exit;
+
+        OnNewCheckRemoveCustomerNotifications(SalesOrderHeader.RecordId,true);
+
+        if CustCheckCreditLimit.SalesHeaderShowWarningAndGetCause(SalesOrderHeader,AdditionalContextId) then
+          CreateAndSendNotification(SalesOrderHeader.RecordId,AdditionalContextId,'');
+    end;
+
+    [Scope('Personalization')]
+    procedure ShowNotificationDetails(CreditLimitNotification: Notification)
+    var
+        CreditLimitNotificationPage: Page "Credit Limit Notification";
+    begin
+        CreditLimitNotificationPage.SetHeading(CreditLimitNotification.Message);
+        CreditLimitNotificationPage.InitializeFromNotificationVar(CreditLimitNotification);
+        CreditLimitNotificationPage.RunModal;
+    end;
+
+    local procedure CreateAndSendNotification(RecordId: RecordID;AdditionalContextId: Guid;Heading: Text[250])
+    var
+        NotificationToSend: Notification;
+    begin
+        if AdditionalContextId = GetBothNotificationsId then begin
+          CreateAndSendNotification(RecordId,GetCreditLimitNotificationId,CustCheckCreditLimit.GetHeading);
+          CreateAndSendNotification(RecordId,GetOverdueBalanceNotificationId,CustCheckCreditLimit.GetSecondHeading);
+          exit;
+        end;
+
+        if Heading = '' then
+          Heading := CustCheckCreditLimit.GetHeading;
+
+        case Heading of
+          CreditLimitNotificationMsg:
+            NotificationToSend.Id(GetCreditLimitNotificationId);
+          OverdueBalanceNotificationMsg:
+            NotificationToSend.Id(GetOverdueBalanceNotificationId);
+          else
+            NotificationToSend.Id(CreateGuid);
+        end;
+
+        NotificationToSend.Message(Heading);
+        NotificationToSend.Scope(NOTIFICATIONSCOPE::LocalScope);
+        NotificationToSend.AddAction(GetDetailsTxt,CODEUNIT::"Cust-Check Cr. Limit",'ShowNotificationDetails');
+        CustCheckCreditLimit.PopulateDataOnNotification(NotificationToSend);
+        NotificationLifecycleMgt.SendNotificationWithAdditionalContext(NotificationToSend,RecordId,AdditionalContextId);
+    end;
+
+    [Scope('Personalization')]
+    procedure GetCreditLimitNotificationId(): Guid
+    begin
+        exit('C80FEEDA-802C-4879-B826-34A10FB77087');
+    end;
+
+    [Scope('Personalization')]
+    procedure GetOverdueBalanceNotificationId(): Guid
+    begin
+        exit('EC8348CB-07C1-499A-9B70-B3B081A33C99');
+    end;
+
+    [Scope('Personalization')]
+    procedure GetBothNotificationsId(): Guid
+    begin
+        exit('EC8348CB-07C1-499A-9B70-B3B081A33D00');
+    end;
+
+    [Scope('Personalization')]
+    procedure IsCreditLimitNotificationEnabled(Customer: Record Customer): Boolean
+    var
+        MyNotifications: Record "My Notifications";
+    begin
+        exit(MyNotifications.IsEnabledForRecord(GetCreditLimitNotificationId,Customer));
+    end;
+
+    [Scope('Personalization')]
+    procedure IsOverdueBalanceNotificationEnabled(Customer: Record Customer): Boolean
+    var
+        MyNotifications: Record "My Notifications";
+    begin
+        exit(MyNotifications.IsEnabledForRecord(GetOverdueBalanceNotificationId,Customer));
+    end;
+
+    [EventSubscriber(ObjectType::Page, 1518, 'OnInitializingNotificationWithDefaultState', '', false, false)]
+    local procedure OnInitializingNotificationWithDefaultState()
+    var
+        MyNotifications: Record "My Notifications";
+    begin
+        MyNotifications.InsertDefaultWithTableNum(GetCreditLimitNotificationId,
+          CreditLimitNotificationMsg,
+          CreditLimitNotificationDescriptionTxt,
+          DATABASE::Customer);
+        MyNotifications.InsertDefaultWithTableNum(GetOverdueBalanceNotificationId,
+          OverdueBalanceNotificationMsg,
+          OverdueBalanceNotificationDescriptionTxt,
+          DATABASE::Customer);
+    end;
+
+    [IntegrationEvent(false, false)]
+    [Scope('Personalization')]
+    procedure OnNewCheckRemoveCustomerNotifications(RecId: RecordID;RecallCreditOverdueNotif: Boolean)
+    begin
+    end;
+
+    [Scope('Personalization')]
+    procedure GetCreditLimitNotificationMsg(): Text
+    begin
+        exit(CreditLimitNotificationMsg);
+    end;
+
+    [Scope('Personalization')]
+    procedure GetOverdueBalanceNotificationMsg(): Text
+    begin
+        exit(OverdueBalanceNotificationMsg);
+    end;
+}
+

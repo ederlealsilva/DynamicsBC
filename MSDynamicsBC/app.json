@@ -1,0 +1,26 @@
+{
+  "id": "9af32a52-8bb5-442b-8252-af1fb030a0b3",
+  "name": "DynamicsBC",
+  "publisher": "ederlealsilva",
+  "brief": "",
+  "description": "Standard Objects Files",
+  "version": "1.0.0.0",
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "logo": "",
+  "capabilities": [],
+  "dependencies": [],
+  "screenshots": [],
+  "features": [
+		"TranslationFile"
+  ],
+  "platform": "13.0.0.0",
+  "application": "13.0.0.0",
+  "idRange": {
+    "from": 1,
+    "to": 2999999999
+  },
+  "runtime": "2.1"
+}

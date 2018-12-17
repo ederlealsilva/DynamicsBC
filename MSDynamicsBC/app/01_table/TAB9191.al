@@ -1,0 +1,43 @@
+table 9191 "Terms And Conditions State"
+{
+    // version NAVW113.00
+
+    Caption = 'Terms And Conditions State';
+    DataPerCompany = false;
+
+    fields
+    {
+        field(1;"Terms And Conditions Code";Code[20])
+        {
+            Caption = 'Terms And Conditions Code';
+            TableRelation = "Terms And Conditions";
+        }
+        field(2;"User ID";Code[50])
+        {
+            Caption = 'User ID';
+            DataClassification = EndUserIdentifiableInformation;
+            TableRelation = User;
+            ValidateTableRelation = false;
+        }
+        field(3;Accepted;Boolean)
+        {
+            Caption = 'Accepted';
+        }
+        field(4;"Date Accepted";DateTime)
+        {
+            Caption = 'Date Accepted';
+        }
+    }
+
+    keys
+    {
+        key(Key1;"Terms And Conditions Code","User ID")
+        {
+        }
+    }
+
+    fieldgroups
+    {
+    }
+}
+

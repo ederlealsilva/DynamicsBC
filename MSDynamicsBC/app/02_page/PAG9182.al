@@ -1,0 +1,156 @@
+page 9182 "Generic Charts"
+{
+    // version NAVW113.00
+
+    ApplicationArea = Basic,Suite;
+    Caption = 'Generic Charts';
+    CardPageID = "Generic Chart Setup";
+    PageType = List;
+    SourceTable = Chart;
+    SourceTableView = SORTING(ID);
+    UsageCategory = Lists;
+
+    layout
+    {
+        area(content)
+        {
+            repeater(Control7)
+            {
+                ShowCaption = false;
+                field(ID;ID)
+                {
+                    ApplicationArea = Basic,Suite;
+                    Caption = 'ID';
+                    ToolTip = 'Specifies the unique ID of the chart.';
+                }
+                field(Name;Name)
+                {
+                    ApplicationArea = Basic,Suite;
+                    Caption = 'Name';
+                    ToolTip = 'Specifies the name of the record.';
+                }
+                field("BLOB.HasValue";BLOB.HasValue)
+                {
+                    ApplicationArea = Basic,Suite;
+                    Caption = 'Data';
+                    ToolTip = 'Specifies the data that is shown in the chart.';
+                }
+                field("GenericChartMgt.GetDescription(Rec)";GenericChartMgt.GetDescription(Rec))
+                {
+                    ApplicationArea = Basic,Suite;
+                    Caption = 'Description';
+                    MultiLine = true;
+                    ToolTip = 'Specifies a description of the chart.';
+                }
+            }
+        }
+        area(factboxes)
+        {
+            systempart(Control13;Links)
+            {
+                Visible = false;
+            }
+            systempart(Control14;Notes)
+            {
+                Visible = false;
+            }
+        }
+    }
+
+    actions
+    {
+        area(processing)
+        {
+            group("F&unctions")
+            {
+                Caption = 'F&unctions';
+                Image = "Action";
+                action("Import Chart")
+                {
+                    ApplicationArea = Basic,Suite;
+                    Caption = 'Import Chart';
+                    Ellipsis = true;
+                    Image = Import;
+                    ToolTip = 'Import a generic chart in XML format.';
+
+                    trigger OnAction()
+                    var
+                        ChartExists: Boolean;
+                    begin
+                        ChartExists := BLOB.HasValue;
+                        Clear(TempTempBlob.Blob);
+                        if FileMgt.BLOBImport(TempTempBlob,'*.xml') = '' then
+                          exit;
+
+                        if ChartExists then
+                          if not Confirm(Text001,false,TableCaption,ID) then
+                            exit;
+
+                        BLOB := TempTempBlob.Blob;
+                        CurrPage.SaveRecord;
+                    end;
+                }
+                action("E&xport Chart")
+                {
+                    ApplicationArea = Basic,Suite;
+                    Caption = 'E&xport Chart';
+                    Ellipsis = true;
+                    Image = Export;
+                    ToolTip = 'Export a generic chart in XML format. You can rename the file, modify the chart definition using an XML editor, and then import the new chart into another client.';
+
+                    trigger OnAction()
+                    begin
+                        CalcFields(BLOB);
+                        if BLOB.HasValue then begin
+                          TempTempBlob.Blob := BLOB;
+                          FileMgt.BLOBExport(TempTempBlob,'*.xml',true);
+                        end;
+                    end;
+                }
+                action("Copy Chart")
+                {
+                    ApplicationArea = Basic,Suite;
+                    Caption = 'Copy Chart';
+                    Ellipsis = true;
+                    Image = Copy;
+                    ToolTip = 'Copy the selected generic chart to create a new generic chart.';
+
+                    trigger OnAction()
+                    var
+                        CopyGenericChart: Page "Copy Generic Chart";
+                    begin
+                        if BLOB.HasValue then
+                          CalcFields(BLOB);
+                        CopyGenericChart.SetSourceChart(Rec);
+                        CopyGenericChart.RunModal;
+                    end;
+                }
+                action("Delete Chart")
+                {
+                    ApplicationArea = Basic,Suite;
+                    Caption = 'Delete Chart';
+                    Image = Delete;
+                    ToolTip = 'Delete the selected generic chart.';
+
+                    trigger OnAction()
+                    begin
+                        if BLOB.HasValue then
+                          if Confirm(Text002,false,TableCaption,ID) then begin
+                            CalcFields(BLOB);
+                            Clear(BLOB);
+                            CurrPage.SaveRecord;
+                          end;
+                    end;
+                }
+            }
+        }
+    }
+
+    var
+        Text001: Label 'Do you want to replace the existing definition for %1 %2?', Comment='Do you want to replace the existing definition for Chart 36-06?';
+        Text002: Label 'Are you sure that you want to delete the definition for %1 %2?', Comment='Are you sure that you want to delete the definition for Chart 36-06?';
+        TempTempBlob: Record TempBlob temporary;
+        FileMgt: Codeunit "File Management";
+        GenericChartMgt: Codeunit "Generic Chart Mgt";
+}
+

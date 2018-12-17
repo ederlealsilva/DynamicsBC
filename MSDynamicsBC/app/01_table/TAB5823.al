@@ -1,0 +1,45 @@
+table 5823 "G/L - Item Ledger Relation"
+{
+    // version NAVW16.00
+
+    Caption = 'G/L - Item Ledger Relation';
+
+    fields
+    {
+        field(1;"G/L Entry No.";Integer)
+        {
+            Caption = 'G/L Entry No.';
+            NotBlank = true;
+            TableRelation = "G/L Entry";
+        }
+        field(2;"Value Entry No.";Integer)
+        {
+            Caption = 'Value Entry No.';
+            NotBlank = true;
+            TableRelation = "Value Entry";
+        }
+        field(3;"G/L Register No.";Integer)
+        {
+            Caption = 'G/L Register No.';
+            TableRelation = "G/L Register";
+        }
+    }
+
+    keys
+    {
+        key(Key1;"G/L Entry No.","Value Entry No.")
+        {
+        }
+        key(Key2;"Value Entry No.")
+        {
+        }
+        key(Key3;"G/L Register No.")
+        {
+        }
+    }
+
+    fieldgroups
+    {
+    }
+}
+

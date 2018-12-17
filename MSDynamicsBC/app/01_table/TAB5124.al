@@ -1,0 +1,26 @@
+table 5124 "Current Salesperson"
+{
+    // version NAVW16.00
+
+    Caption = 'Current Salesperson';
+
+    fields
+    {
+        field(1;"Code";Code[10])
+        {
+            Caption = 'Code';
+        }
+    }
+
+    keys
+    {
+        key(Key1;"Code")
+        {
+        }
+    }
+
+    fieldgroups
+    {
+    }
+}
+
