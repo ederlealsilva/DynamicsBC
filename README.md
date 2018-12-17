@@ -1,8 +1,8 @@
 # Microsoft Dynamics 365 Business Central Objects
-[DynamicBC](https://github.com/ederlealsilva/DynamicsBC) list the Microsoft Dynamics Business Central objects in the new syntax.
+[DynamicBC](https://github.com/ederlealsilva/DynamicsBC) list the Microsoft Dynamics365 Business Central new syntax objects.
 
 ## Getting Started
-The [DynamicBC](https://github.com/ederlealsilva/DynamicsBC) allows you to view the source code of the objects in Microsoft Dynamics Business Central.
+The [DynamicBC](https://github.com/ederlealsilva/DynamicsBC) allows you to view the source code of the objects in Microsoft Dynamics 365 Business Central.
 
 ---
 
